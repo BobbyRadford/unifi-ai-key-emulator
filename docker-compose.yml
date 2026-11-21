@@ -1,0 +1,46 @@
+# Emulated UniFi AI Key (default: Linux CPU, no GPU).
+#
+# For Raspberry Pi 5 + AI HAT+ 2 (Hailo-10H), layer docker-compose.hailo.yml on top:
+#   docker compose -f docker-compose.yml -f docker-compose.hailo.yml up -d --build
+name: unifi-ai-key-emulator
+
+services:
+  ai-key:
+    build:
+      context: .
+      target: cpu
+    image: unifi-ai-key-emulator:cpu
+    container_name: ai-key
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./data:/data
+    environment:
+      AIKEY_NVR: ${AIKEY_NVR:?set AIKEY_NVR in .env}
+      AIKEY_MAC: ${AIKEY_MAC:?set AIKEY_MAC in .env}
+      AIKEY_IP: ${AIKEY_IP:?set AIKEY_IP in .env}
+      AIKEY_TOKEN: ${AIKEY_ADOPTION_TOKEN:-}
+      AIKEY_THREADS: ${AIKEY_THREADS:-4}
+      AIKEY_WHISPER: ${AIKEY_WHISPER:-small}
+      AIKEY_CLIP_BACKEND: ${AIKEY_CLIP_BACKEND:-auto}
+      AIKEY_REID_BACKEND: ${AIKEY_REID_BACKEND:-auto}
+      AIKEY_WHISPER_BACKEND: ${AIKEY_WHISPER_BACKEND:-auto}
+      AIKEY_REID_HEF: ${AIKEY_REID_HEF:-}
+    depends_on:
+      - ai-key-db
+
+  ai-key-db:
+    image: pgvector/pgvector:0.8.0-pg17
+    container_name: ai-key-db
+    restart: unless-stopped
+    # Protect connects to <AIKEY_IP>:5432, so Postgres listens on the host address.
+    network_mode: host
+    environment:
+      POSTGRES_PASSWORD: ${AIKEY_DB_PASSWORD:?set AIKEY_DB_PASSWORD in .env}
+      NVR_IP: ${AIKEY_NVR:?set AIKEY_NVR in .env}
+    volumes:
+      - ./postgres/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ai-key-db:/var/lib/postgresql/data
+
+volumes:
+  ai-key-db:

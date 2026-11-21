@@ -1,0 +1,13 @@
+# Raspberry Pi 5 + AI HAT+ 2 (Hailo-10H) override.
+#
+# Usage:
+#   ./scripts/download-hailo-models.sh
+#   docker compose -f docker-compose.yml -f docker-compose.hailo.yml up -d --build
+services:
+  ai-key:
+    build:
+      context: .
+      target: hailo
+    image: unifi-ai-key-emulator:hailo
+    devices:
+      - /dev/hailo0:/dev/hailo0

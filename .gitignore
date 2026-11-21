@@ -1,0 +1,8 @@
+.env
+data/
+hailo/*.deb
+hailo/*.whl
+hailo/*.hef
+__pycache__/
+*.pyc
+.pytest_cache/
